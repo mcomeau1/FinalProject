@@ -45,88 +45,114 @@ volatile int nextState = 1;
 //    T1CONbits.TON = 0;
 //}
 int main(void){
+
 	double ADC_value;
         char value[8];
         char Val1[8], Val2[8];
+
         TMR2 = 0;
         PR2 = 512;
         IFS0bits.T2IF = 0;
         IEC0bits.T2IE = 1;
         T2CON = 0x8030;
 
-        OC1CON = 0x6; //0110
+        OC1CON = 0x6;
         OC1RS = 0;
+
         OC2CON = 0x6;
         OC2RS = 0;
 
 	LCDInitialize( );
 
-	AD1PCFG &= 0xFFDF;	 	// AN5 input pin is analog ^:
-	AD1CON2 = 0; 		// Configure A/D voltage reference
-	AD1CON3 = 0x0101;
-	AD1CON1 = 0x20E4;
-	AD1CHS = 5; 		// Configure input channels
-	AD1CSSL = 0; 		// No inputs is scanned
+        /**********************************************************************/
+        //  AN0, AN1, AN4, and AN5 pins are analog:
+	AD1PCFG &= 0xFFCC;
 
-	IFS0bits.AD1IF = 0; // Clear A/D conversion interrupt.
-	AD1CON1bits.ADON = 1; // Turn on A/D
-        TRISBbits.TRISB5 = 1;
-        CNEN2bits.CN27IE = 1;
+        /**********************************************************************/
+        //  Scan each of the following input channels AN0, AN1, AN4, and AN5
+        AD1CSSL = 0xFFCC;
+        
+        /**********************************************************************/
+        //  Non-functional when device is idle, 
+        //  Internal counter trigers conversion,
+        //  Auto start after convert
+        AD1CON1 = 0x20E4;
+
+        /**********************************************************************/
+        //  Configure A/D voltage reference,
+        //  Set AD1IF ever 4 samples
+	AD1CON2 = 0x040C;
+
+        /**********************************************************************/
+        //  4*TAD
+        //  2*TCY
+	AD1CON3 = 0x0401;
+
+        /**********************************************************************/
+        //  Unused reminants leftover from lab3
+	//AD1CHS = 5; 		
+	//AD1CSSL = 0;
+
+	AD1CON1bits.ADON = 1;   // Turn on A/D
+        IFS0bits.AD1IF = 0;     // Clear A/D conversion interrupt.
+
+        TRISBbits.TRISB5 = 1;   // SW1 -> Used in lab three to change direction
+        CNEN2bits.CN27IE = 1;   // SW1 change notification enabled
         IFS1bits.CNIF = 0;
         IEC1bits.CNIE = 1;
-	while(1){
-        switch(state)
-        {
-        case 0:
-            TRISBbits.TRISB10 = 0;
-            TRISBbits.TRISB11 = 0;
-            TRISBbits.TRISB8 = 0;
-            TRISBbits.TRISB9 = 0;
-            RPOR4bits.RP8R = NULL;
-            RPOR4bits.RP9R = NULL;
-            RPOR5bits.RP10R = NULL;
-            RPOR5bits.RP11R = NULL;
-            nextState = 1;
-            break;
 
-        case 1:
-            TRISBbits.TRISB8 = 0;
-            TRISBbits.TRISB9 = 0;
-            RPOR5bits.RP10R = 18; //OC1 (10 - foward, 8 - backward)
-            RPOR5bits.RP11R = 19; //OC2 (11 - foward, 9 - backward)
-            nextState = 2;
-            break;
 
-        case 2:
-            TRISBbits.TRISB10 = 0;
-            TRISBbits.TRISB11 = 0;
-            TRISBbits.TRISB8 = 0;
-            TRISBbits.TRISB9 = 0;
-            RPOR4bits.RP8R = NULL;
-            RPOR4bits.RP9R = NULL;
-            RPOR5bits.RP10R = NULL;
-            RPOR5bits.RP11R = NULL;
-            nextState = 3;
-            break;
 
-        case 3:
-            TRISBbits.TRISB10 = 0;
-            TRISBbits.TRISB11 = 0;
-            RPOR4bits.RP8R = 18; //OC1 (10 - foward, 8 - backward)
-            RPOR4bits.RP9R = 19; //OC2 (11 - foward, 9 - backward)
-            nextState = 0;
-            break;
-       }
+	while(1) {
 
-            while (IFS0bits.AD1IF ==0){};     // AD1CON1bits.DONE can be checked instead
+            switch(state) {
+                case 0:
+                    TRISBbits.TRISB10 = 0;
+                    TRISBbits.TRISB11 = 0;
+                    TRISBbits.TRISB8 = 0;
+                    TRISBbits.TRISB9 = 0;
+                    RPOR4bits.RP8R = NULL;
+                    RPOR4bits.RP9R = NULL;
+                    RPOR5bits.RP10R = NULL;
+                    RPOR5bits.RP11R = NULL;
+                    nextState = 1;
+                    break;
+                case 1:
+                    TRISBbits.TRISB8 = 0;
+                    TRISBbits.TRISB9 = 0;
+                    RPOR5bits.RP10R = 18; //OC1 (10 - foward, 8 - backward)
+                    RPOR5bits.RP11R = 19; //OC2 (11 - foward, 9 - backward)
+                    nextState = 2;
+                    break;
+                case 2:
+                    TRISBbits.TRISB10 = 0;
+                    TRISBbits.TRISB11 = 0;
+                    TRISBbits.TRISB8 = 0;
+                    TRISBbits.TRISB9 = 0;
+                    RPOR4bits.RP8R = NULL;
+                    RPOR4bits.RP9R = NULL;
+                    RPOR5bits.RP10R = NULL;
+                    RPOR5bits.RP11R = NULL;
+                    nextState = 3;
+                    break;
+                case 3:
+                    TRISBbits.TRISB10 = 0;
+                    TRISBbits.TRISB11 = 0;
+                    RPOR4bits.RP8R = 18; //OC1 (10 - foward, 8 - backward)
+                    RPOR4bits.RP9R = 19; //OC2 (11 - foward, 9 - backward)
+                    nextState = 0;
+                    break;
+            }
+
+            while (IFS0bits.AD1IF ==0){};   // AD1CON1bits.DONE can be checked instead
             IFS0bits.AD1IF = 0;
 
             ADC_value = ADC1BUF0 * 3.3 / 1023;   // 0 <= ADC <= 3.3
             sprintf(value, "%.3f", ADC_value );
             LCDMoveCursor(0,0); LCDPrintString(value);
 
-            OC1RS = ADC1BUF0;
-            OC2RS = 1023 - ADC1BUF0;
+            OC1RS = ADC1BUF0;   //OC1RS -> ADC1BUF0 -> AN0 -> left IR
+            OC2RS = ADC1BUF1;   //OC2RS -> ADC1BUF1 -> AN1 -> right IR
 
             if(OC1RS > 512)
             {
@@ -136,6 +162,7 @@ int main(void){
             {
                 OC2RS = 512;
             }
+
             sprintf(Val1, "%3d", 100 * OC1RS / 512);
             LCDMoveCursor(1,0); LCDPrintString(Val1);
             sprintf(Val2, "%3d", 100 * OC2RS / 512);
