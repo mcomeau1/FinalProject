@@ -50,6 +50,10 @@ int main(void){
         int adc2 = 0;
         int adc3 = 0;
 
+        int counter = 0;
+        int stopping = 0;
+        int reachedEnd = 0;
+
 	double ADC_value;
         char value[8];
         char Val1[8], Val2[8];
@@ -155,32 +159,50 @@ int main(void){
             sprintf(value, "%.3f", ADC_value );
             LCDMoveCursor(0,0); LCDPrintString(value);
 
-            if (ADC1BUF3 < 256 && ADC1BUF2 < 256 && ADC1BUF1 < 256) {
-                adc1 = 512;
-                adc2 = 512;
-                adc3 = 512;
-            }
+            if (reachedEnd == 0) {
+                if (ADC1BUF2 < 384 && ADC1BUF1 < 384 && ADC1BUF0 < 384) {
+                    stopping = 0;
+                    adc1 = 0;
+                    adc2 = 0;
+                    adc3 = 768;
+                }
+                else if (stopping == 0 && ADC1BUF2 > 384 && ADC1BUF1 > 384 && ADC1BUF0 > 384) {
+                    stopping = 1;
+                    ++counter;
+//                    if (counter == 3) {
+//                        reachedEnd = 1;
+//                    }
+                }
+                else {
+                    stopping = 0;
+                    if (ADC1BUF2 > 384) {
+                        adc3 = 768;
+                    }
+                    else {
+                        adc3 = 0;
+                    }
 
-            if (ADC1BUF2 > 256) {
-                adc3 = 512;
-            }
-            else {
-                adc3 = 0;
-            }
+                    if (ADC1BUF1 > 384) {
+                        adc2 = 768;
+                    }
+                    else {
+                        adc2 = 0;
+                    }
 
-            if (ADC1BUF1 > 256) {
-                adc2 = 512;
+                    if (ADC1BUF0 > 384) {
+                        adc1 = 768;
+                    }
+                    else {
+                        adc1 = 0;
+                    }
+                }
             }
-            else {
-                adc2 = 0;
-            }
-
-            if (ADC1BUF0 > 256) {
-                adc1 = 512;
-            }
-            else {
-                adc1 = 0;
-            }
+//            else {
+//                adc1 = 768;
+//                adc2 = 0;
+//                adc3 = 768;
+//
+//            }
 
             OC1RS = adc3 - adc2;   //OC1RS -> ADC1BUF0 -> AN0 -> left IR
             OC2RS = adc3 - adc1;   //OC2RS -> ADC1BUF1 -> AN1 -> right IR
