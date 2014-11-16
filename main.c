@@ -49,9 +49,10 @@ int main(void){
         int adc1 = 0;
         int adc2 = 0;
         int adc3 = 0;
-
+        int left = 0;
+        int right = 0;
         int counter = 0;
-        int stopping = 0;
+        int travelState = 2;
         int reachedEnd = 0;
 
 	double ADC_value;
@@ -126,29 +127,137 @@ int main(void){
                     nextState = 1;
                     break;
                 case 1:
-                    TRISBbits.TRISB8 = 0;
-                    TRISBbits.TRISB9 = 0;
-                    RPOR5bits.RP10R = 18; //OC1 (10 - foward, 8 - backward)
-                    RPOR5bits.RP11R = 19; //OC2 (11 - foward, 9 - backward)
-                    nextState = 2;
-                    break;
-                case 2:
-                    TRISBbits.TRISB10 = 0;
-                    TRISBbits.TRISB11 = 0;
-                    TRISBbits.TRISB8 = 0;
-                    TRISBbits.TRISB9 = 0;
-                    RPOR4bits.RP8R = NULL;
-                    RPOR4bits.RP9R = NULL;
-                    RPOR5bits.RP10R = NULL;
-                    RPOR5bits.RP11R = NULL;
-                    nextState = 3;
-                    break;
-                case 3:
                     TRISBbits.TRISB10 = 0;
                     TRISBbits.TRISB11 = 0;
                     RPOR4bits.RP8R = 18; //OC1 (10 - foward, 8 - backward)
                     RPOR4bits.RP9R = 19; //OC2 (11 - foward, 9 - backward)
-                    nextState = 0;
+                    if (ADC1BUF2 < 384 && ADC1BUF1 < 384 && ADC1BUF0 < 384) {
+                        adc1 = 0;
+                        adc2 = 0;
+                        adc3 = 768;
+                    } else {
+                        state = 2;
+                    }
+                    break;
+                case 2:
+                    TRISBbits.TRISB10 = 0;
+                    TRISBbits.TRISB11 = 0;
+                    RPOR4bits.RP8R = 18; //OC1 (10 - foward, 8 - backward)
+                    RPOR4bits.RP9R = 19; //OC2 (11 - foward, 9 - backward)
+                    if (reachedEnd == 0) {
+                        if (ADC1BUF2 > 384 && ADC1BUF1 > 384 && ADC1BUF0 > 384 && travelState == 2) {
+                            if (left == 1 && right == 0) {
+                                adc1 = 250;
+                                adc2 = 0;
+                                adc3 = 768;
+                            }
+                            else if (right == 1 && left == 0) {
+                                adc1 = 0;
+                                adc2 = 250;
+                                adc3 = 768;
+                            }
+                            else {
+                                adc1 = 0;
+                                adc2 = 0;
+                                adc3 = 768;
+                            }
+                            travelState = 0;
+                        }
+                        else if (ADC1BUF2 < 382 && left == 1) {
+                            adc1 = 0;
+                            adc2 = 600;
+                            adc3 = 768;
+                        }
+                        else if (ADC1BUF2 < 382 && right == 1) {
+                            adc1 = 600;
+                            adc2 = 0;
+                            adc3 = 768;
+                        }
+                        else {
+                            if (ADC1BUF2 > 384) {
+                                adc3 = 768;
+                            }
+                            else {
+                                adc3 = 0;
+                            }
+
+                            if (ADC1BUF1 > 384) {
+                                adc2 = 768;
+                            }
+                            else {
+                                adc2 = 0;
+                                left = 1;
+                                right = 0;
+                            }
+
+                            if (ADC1BUF0 > 384) {
+                                adc1 = 768;
+                            }
+                            else {
+                                adc1 = 0;
+                                right = 1;
+                                left = 0;
+                            }
+                        }
+                    }
+                    else {
+                        int i = 0;
+                        for (i = 0; i < 5000; i++) {
+                            TRISBbits.TRISB11 = 0;
+                            TRISBbits.TRISB8 = 0;
+                            RPOR4bits.RP8R = 18;
+                            RPOR4bits.RP9R = 0;
+                            RPOR5bits.RP10R = 0;
+                            RPOR5bits.RP11R = 19;
+                            adc1 = 0;
+                            adc2 = 0;
+                            adc3 = 768;
+                        }
+                        reachedEnd = 0;
+                    }
+                    break;
+//                    TRISBbits.TRISB10 = 0;
+//                    TRISBbits.TRISB11 = 0;
+//                    TRISBbits.TRISB8 = 0;
+//                    TRISBbits.TRISB9 = 0;
+//                    RPOR4bits.RP8R = NULL;
+//                    RPOR4bits.RP9R = NULL;
+//                    RPOR5bits.RP10R = NULL;
+//                    RPOR5bits.RP11R = NULL;
+//                    nextState = 3;
+//                    break;
+//                case 3:
+//                    TRISBbits.TRISB8 = 0;
+//                    TRISBbits.TRISB9 = 0;
+//                    RPOR5bits.RP10R = 18; //OC1 (10 - foward, 8 - backward)
+//                    RPOR5bits.RP11R = 19; //OC2 (11 - foward, 9 - backward)
+//                    nextState = 0;
+//                    break;
+//                case 4:
+//                    TRISBbits.TRISB11 = 0;
+//                    TRISBbits.TRISB8 = 0;
+//                    RPOR4bits.RP8R = 18;
+//                    RPOR4bits.RP9R = 0;
+//                    RPOR5bits.RP10R = 0;
+//                    RPOR5bits.RP11R = 19;
+//                    break;
+            }
+
+            switch (travelState) {
+                case 0:
+                    counter++;
+                    if (counter == 3) {
+                        reachedEnd = 1;
+                    }
+                    travelState = 1;
+                    break;
+                case 1:
+                    if (ADC1BUF0 < 384 && ADC1BUF1 < 384) {
+                        travelState = 2;
+                    }
+
+                    break;
+                case 2:
                     break;
             }
 
@@ -159,73 +268,14 @@ int main(void){
             sprintf(value, "%.3f", ADC_value );
             LCDMoveCursor(0,0); LCDPrintString(value);
 
-            if (reachedEnd == 0) {
-                if (ADC1BUF2 < 384 && ADC1BUF1 < 384 && ADC1BUF0 < 384) {
-                    stopping = 0;
-                    adc1 = 0;
-                    adc2 = 0;
-                    adc3 = 768;
-                }
-                else if (stopping == 0 && ADC1BUF2 > 384 && ADC1BUF1 > 384 && ADC1BUF0 > 384) {
-                    stopping = 1;
-                    ++counter;
-//                    if (counter == 3) {
-//                        reachedEnd = 1;
-//                    }
-                }
-                else {
-                    stopping = 0;
-                    if (ADC1BUF2 > 384) {
-                        adc3 = 768;
-                    }
-                    else {
-                        adc3 = 0;
-                    }
-
-                    if (ADC1BUF1 > 384) {
-                        adc2 = 768;
-                    }
-                    else {
-                        adc2 = 0;
-                    }
-
-                    if (ADC1BUF0 > 384) {
-                        adc1 = 768;
-                    }
-                    else {
-                        adc1 = 0;
-                    }
-                }
-            }
-//            else {
-//                adc1 = 768;
-//                adc2 = 0;
-//                adc3 = 768;
-//
-//            }
-
             OC1RS = adc3 - adc2;   //OC1RS -> ADC1BUF0 -> AN0 -> left IR
             OC2RS = adc3 - adc1;   //OC2RS -> ADC1BUF1 -> AN1 -> right IR
 
-//            if(OC1RS > 512)
-//            {
-//                OC1RS = 512;
-//            }
-//            else if(OC2RS > 512)
-//            {
-//                OC2RS = 512;
-//            }
-
-//            sprintf(Val1, "%3d", 100 * OC1RS / 1024);
-//            LCDMoveCursor(1,0); LCDPrintString(Val1);
-//            sprintf(Val2, "%3d", 100 * OC2RS / 1024);
-//            LCDMoveCursor(1,4); LCDPrintString(Val2);
-
-            sprintf(Val1, "%4d", OC1RS);
+            sprintf(Val1, "%4d", counter);
             LCDMoveCursor(1,0);
             LCDPrintString(Val1);
 
-            sprintf(Val2, "%4d", OC2RS);
+            sprintf(Val2, "%4d", travelState);
             LCDMoveCursor(1,4);
             LCDPrintString(Val2);
 	}
