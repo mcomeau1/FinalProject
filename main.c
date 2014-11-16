@@ -46,6 +46,10 @@ volatile int nextState = 1;
 //}
 int main(void){
 
+        int adc1 = 0;
+        int adc2 = 0;
+        int adc3 = 0;
+
 	double ADC_value;
         char value[8];
         char Val1[8], Val2[8];
@@ -70,7 +74,7 @@ int main(void){
 
         /**********************************************************************/
         //  Scan each of the following input channels AN0, AN1, AN4, and AN5
-        AD1CSSL = 0xFFCC;
+        AD1CSSL = 0x0033;
         
         /**********************************************************************/
         //  Non-functional when device is idle, 
@@ -81,12 +85,12 @@ int main(void){
         /**********************************************************************/
         //  Configure A/D voltage reference,
         //  Set AD1IF ever 4 samples
-	AD1CON2 = 0x040C;
+	AD1CON2 = 0x043C;
 
         /**********************************************************************/
         //  4*TAD
         //  2*TCY
-	AD1CON3 = 0x0401;
+	AD1CON3 = 0x0406;
 
         /**********************************************************************/
         //  Unused reminants leftover from lab3
@@ -151,22 +155,57 @@ int main(void){
             sprintf(value, "%.3f", ADC_value );
             LCDMoveCursor(0,0); LCDPrintString(value);
 
-            OC1RS = ADC1BUF0;   //OC1RS -> ADC1BUF0 -> AN0 -> left IR
-            OC2RS = ADC1BUF1;   //OC2RS -> ADC1BUF1 -> AN1 -> right IR
-
-            if(OC1RS > 512)
-            {
-                OC1RS = 512;
-            }
-            else if(OC2RS > 512)
-            {
-                OC2RS = 512;
+            if (ADC1BUF3 < 256 && ADC1BUF2 < 256 && ADC1BUF1 < 256) {
+                adc1 = 512;
+                adc2 = 512;
+                adc3 = 512;
             }
 
-            sprintf(Val1, "%3d", 100 * OC1RS / 512);
-            LCDMoveCursor(1,0); LCDPrintString(Val1);
-            sprintf(Val2, "%3d", 100 * OC2RS / 512);
-            LCDMoveCursor(1,4); LCDPrintString(Val2);
+            if (ADC1BUF2 > 256) {
+                adc3 = 512;
+            }
+            else {
+                adc3 = 0;
+            }
+
+            if (ADC1BUF1 > 256) {
+                adc2 = 512;
+            }
+            else {
+                adc2 = 0;
+            }
+
+            if (ADC1BUF0 > 256) {
+                adc1 = 512;
+            }
+            else {
+                adc1 = 0;
+            }
+
+            OC1RS = adc3 - adc2;   //OC1RS -> ADC1BUF0 -> AN0 -> left IR
+            OC2RS = adc3 - adc1;   //OC2RS -> ADC1BUF1 -> AN1 -> right IR
+
+//            if(OC1RS > 512)
+//            {
+//                OC1RS = 512;
+//            }
+//            else if(OC2RS > 512)
+//            {
+//                OC2RS = 512;
+//            }
+
+//            sprintf(Val1, "%3d", 100 * OC1RS / 1024);
+//            LCDMoveCursor(1,0); LCDPrintString(Val1);
+//            sprintf(Val2, "%3d", 100 * OC2RS / 1024);
+//            LCDMoveCursor(1,4); LCDPrintString(Val2);
+
+            sprintf(Val1, "%4d", OC1RS);
+            LCDMoveCursor(1,0);
+            LCDPrintString(Val1);
+
+            sprintf(Val2, "%4d", OC2RS);
+            LCDMoveCursor(1,4);
+            LCDPrintString(Val2);
 	}
 	return 0;
 }
